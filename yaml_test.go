@@ -27,7 +27,6 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/stretchr/testify/require"
 	yamlv2 "sigs.k8s.io/yaml/goyaml.v2"
 	yamlv3 "sigs.k8s.io/yaml/goyaml.v3"
 )
@@ -926,8 +925,12 @@ spec:
 	var v2Map map[string]interface{}
 
 	// unmarshal the input into the two maps
-	require.NoError(t, yamlv3.Unmarshal([]byte(input), &v3Map))
-	require.NoError(t, yamlv2.Unmarshal([]byte(input), &v2Map))
+	if err := yamlv3.Unmarshal([]byte(input), &v3Map); err != nil {
+		t.Fatal(err)
+	}
+	if err := yamlv2.Unmarshal([]byte(input), &v2Map); err != nil {
+		t.Fatal(err)
+	}
 
 	// marshal using non-default settings from the yaml v3 fork
 	var buf bytes.Buffer
@@ -939,7 +942,10 @@ spec:
 
 	// marshal using the yaml v2 fork
 	v2output, err := yamlv2.Marshal(v2Map)
-	require.NoError(t, err)
-
-	require.Equal(t, v3output, string(v2output))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if v3output != string(v2output) {
+		t.Fatalf("expected\n%s\ngot\n%s", string(v2output), v3output)
+	}
 }
